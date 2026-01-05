@@ -1,265 +1,393 @@
 'use client';
 
-import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Brain, Cpu, Zap, GitBranch, TrendingUp } from 'lucide-react';
+import { Calendar, Clock, FileText, ExternalLink, Filter, Search, Download } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-const modelPerformance = [
-  { week: 'Week 1', accuracy: 82, precision: 78, recall: 80 },
-  { week: 'Week 2', accuracy: 85, precision: 82, recall: 83 },
-  { week: 'Week 3', accuracy: 88, precision: 85, recall: 86 },
-  { week: 'Week 4', accuracy: 91, precision: 88, recall: 89 },
-  { week: 'Week 5', accuracy: 93, precision: 91, recall: 92 },
-  { week: 'Week 6', accuracy: 95, precision: 93, recall: 94 },
+// Sample data matching Google Sheets structure
+const workItems = [
+  {
+    id: 1,
+    date: '12/15/2025',
+    teamMember: 'Joshua',
+    client: 'Rolls Royce Hire',
+    task: 'Form Responder',
+    hoursWorked: 0,
+    status: 'In Dev (On Hold)',
+    notes: '-Need the content',
+    documentation: ''
+  },
+  {
+    id: 2,
+    date: '12/23/2025',
+    teamMember: 'AJ',
+    client: 'Setup n6n and',
+    task: '',
+    hoursWorked: 0,
+    status: 'In Dev (On Hold)',
+    notes: '',
+    documentation: ''
+  },
+  {
+    id: 3,
+    date: '12/24/2025',
+    teamMember: 'AJ',
+    client: 'LHM Dashboard',
+    task: '',
+    hoursWorked: 0,
+    status: 'In Dev',
+    notes: '',
+    documentation: ''
+  },
+  {
+    id: 4,
+    date: '12/24/2025',
+    teamMember: 'Joshua',
+    client: 'Skylark booking',
+    task: '',
+    hoursWorked: 0,
+    status: 'In Dev (On Hold)',
+    notes: '',
+    documentation: 'https://drive.google.c...'
+  },
+  {
+    id: 5,
+    date: '12/24/2025',
+    teamMember: 'Joshua',
+    client: 'Skylark Dashboard',
+    task: '',
+    hoursWorked: 0,
+    status: 'Not Started',
+    notes: '',
+    documentation: ''
+  },
+  {
+    id: 6,
+    date: '12/24/2025',
+    teamMember: 'Joshua',
+    client: 'Haines Glass',
+    task: '',
+    hoursWorked: 0,
+    status: 'Not Started',
+    notes: '',
+    documentation: ''
+  },
+  {
+    id: 7,
+    date: '12/24/2025',
+    teamMember: 'Joshua',
+    client: 'Tutorial Videos for',
+    task: '',
+    hoursWorked: 0,
+    status: 'In Dev',
+    notes: '',
+    documentation: ''
+  },
 ];
 
-const projectsData = [
-  { month: 'Jan', active: 3, completed: 1, planned: 2 },
-  { month: 'Feb', active: 4, completed: 2, planned: 3 },
-  { month: 'Mar', active: 5, completed: 3, planned: 2 },
-  { month: 'Apr', active: 6, completed: 4, planned: 4 },
-  { month: 'May', active: 7, completed: 5, planned: 3 },
-  { month: 'Jun', active: 8, completed: 6, planned: 5 },
-];
+// Status color mapping
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'Deployed':
+      return 'bg-green-100 text-green-800 border-green-200';
+    case 'In Dev':
+      return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'In Dev (On Hold)':
+      return 'bg-red-100 text-red-800 border-red-200';
+    case 'Planning':
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'Not Started':
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+};
 
-const trainingProgress = [
-  { epoch: '10', loss: 0.85, validation: 0.88 },
-  { epoch: '20', loss: 0.72, validation: 0.76 },
-  { epoch: '30', loss: 0.58, validation: 0.63 },
-  { epoch: '40', loss: 0.45, validation: 0.52 },
-  { epoch: '50', loss: 0.35, validation: 0.42 },
-  { epoch: '60', loss: 0.28, validation: 0.36 },
-  { epoch: '70', loss: 0.22, validation: 0.31 },
-  { epoch: '80', loss: 0.18, validation: 0.28 },
-];
+// Calculate statistics
+const statusCounts = workItems.reduce((acc, item) => {
+  acc[item.status] = (acc[item.status] || 0) + 1;
+  return acc;
+}, {} as Record<string, number>);
 
-const aiProjects = [
-  { id: 1, name: 'Customer Sentiment Analysis', type: 'NLP', status: 'Active', accuracy: 94, progress: 85 },
-  { id: 2, name: 'Product Recommendation Engine', type: 'ML', status: 'Active', accuracy: 91, progress: 72 },
-  { id: 3, name: 'Fraud Detection System', type: 'Deep Learning', status: 'Active', accuracy: 96, progress: 90 },
-  { id: 4, name: 'Image Classification Model', type: 'Computer Vision', status: 'Training', accuracy: 88, progress: 65 },
-  { id: 5, name: 'Chatbot Assistant', type: 'NLP', status: 'Active', accuracy: 92, progress: 95 },
-  { id: 6, name: 'Predictive Analytics', type: 'ML', status: 'Testing', accuracy: 89, progress: 78 },
-];
+const statusChartData = Object.entries(statusCounts).map(([name, value]) => ({
+  name,
+  value
+}));
+
+const statusColors: Record<string, string> = {
+  'Deployed': '#10b981',
+  'In Dev': '#f97316',
+  'In Dev (On Hold)': '#ef4444',
+  'Planning': '#3b82f6',
+  'Not Started': '#6b7280'
+};
+
+// Team member stats
+const teamStats = workItems.reduce((acc, item) => {
+  if (!acc[item.teamMember]) {
+    acc[item.teamMember] = { total: 0, hours: 0 };
+  }
+  acc[item.teamMember].total += 1;
+  acc[item.teamMember].hours += item.hoursWorked;
+  return acc;
+}, {} as Record<string, { total: number; hours: number }>);
+
+const teamChartData = Object.entries(teamStats).map(([name, data]) => ({
+  name,
+  tasks: data.total,
+  hours: data.hours
+}));
 
 export default function AIWorksPage() {
   return (
-    <div className="p-8">
+    <div className="p-8 bg-gray-50 min-h-screen">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">AI Works Dashboard</h1>
-        <p className="mt-2 text-gray-600">Monitor AI projects, model performance, and training metrics</p>
+        <p className="mt-2 text-gray-600">Project tracking and team workflow management</p>
       </div>
 
+      {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <div className="rounded-lg bg-white p-6 shadow">
+        <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Projects</p>
-              <p className="mt-2 text-3xl font-semibold text-gray-900">12</p>
-              <p className="mt-2 text-sm text-green-600">+3 this quarter</p>
+              <p className="text-sm font-medium text-gray-600">Total Projects</p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">{workItems.length}</p>
+              <p className="mt-2 text-sm text-gray-500">Active items</p>
             </div>
             <div className="rounded-full bg-purple-100 p-3">
-              <Brain className="h-8 w-8 text-purple-600" />
+              <FileText className="h-8 w-8 text-purple-600" />
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg bg-white p-6 shadow">
+        <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Models Deployed</p>
-              <p className="mt-2 text-3xl font-semibold text-gray-900">28</p>
-              <p className="mt-2 text-sm text-blue-600">+5 this month</p>
-            </div>
-            <div className="rounded-full bg-blue-100 p-3">
-              <Cpu className="h-8 w-8 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg bg-white p-6 shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Avg Accuracy</p>
-              <p className="mt-2 text-3xl font-semibold text-gray-900">93.2%</p>
-              <p className="mt-2 text-sm text-green-600">+2.5% improvement</p>
-            </div>
-            <div className="rounded-full bg-green-100 p-3">
-              <TrendingUp className="h-8 w-8 text-green-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg bg-white p-6 shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">API Requests</p>
-              <p className="mt-2 text-3xl font-semibold text-gray-900">1.2M</p>
-              <p className="mt-2 text-sm text-orange-600">+18% from last week</p>
+              <p className="text-sm font-medium text-gray-600">In Development</p>
+              <p className="mt-2 text-3xl font-bold text-orange-900">
+                {(statusCounts['In Dev'] || 0) + (statusCounts['In Dev (On Hold)'] || 0)}
+              </p>
+              <p className="mt-2 text-sm text-orange-600">Active work</p>
             </div>
             <div className="rounded-full bg-orange-100 p-3">
-              <Zap className="h-8 w-8 text-orange-600" />
+              <Clock className="h-8 w-8 text-orange-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Not Started</p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">{statusCounts['Not Started'] || 0}</p>
+              <p className="mt-2 text-sm text-gray-600">Pending</p>
+            </div>
+            <div className="rounded-full bg-gray-100 p-3">
+              <Calendar className="h-8 w-8 text-gray-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Team Members</p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">{Object.keys(teamStats).length}</p>
+              <p className="mt-2 text-sm text-blue-600">Active contributors</p>
+            </div>
+            <div className="rounded-full bg-blue-100 p-3">
+              <FileText className="h-8 w-8 text-blue-600" />
             </div>
           </div>
         </div>
       </div>
 
+      {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2 mb-8">
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Model Performance Metrics</h2>
+        <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Status Distribution</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={modelPerformance}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="week" />
-              <YAxis domain={[70, 100]} />
+            <PieChart>
+              <Pie
+                data={statusChartData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {statusChartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={statusColors[entry.name] || '#6b7280'} />
+                ))}
+              </Pie>
               <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="accuracy" stroke="#8b5cf6" strokeWidth={2} />
-              <Line type="monotone" dataKey="precision" stroke="#3b82f6" strokeWidth={2} />
-              <Line type="monotone" dataKey="recall" stroke="#10b981" strokeWidth={2} />
-            </LineChart>
+            </PieChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Project Status Overview</h2>
+        <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Team Workload</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={projectsData}>
+            <BarChart data={teamChartData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
+              <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="active" fill="#3b82f6" name="Active" />
-              <Bar dataKey="completed" fill="#10b981" name="Completed" />
-              <Bar dataKey="planned" fill="#f59e0b" name="Planned" />
+              <Bar dataKey="tasks" fill="#8b5cf6" name="Tasks Assigned" />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2 mb-8">
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Training Progress</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={trainingProgress}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="epoch" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Area type="monotone" dataKey="loss" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.6} name="Training Loss" />
-              <Area type="monotone" dataKey="validation" stackId="2" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.6} name="Validation Loss" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Stats</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
-              <div className="flex items-center">
-                <Brain className="h-8 w-8 text-purple-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-600">Neural Networks</p>
-                  <p className="text-lg font-semibold text-gray-900">8 Active</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center">
-                <GitBranch className="h-8 w-8 text-blue-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-600">Experiments</p>
-                  <p className="text-lg font-semibold text-gray-900">45 Running</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-              <div className="flex items-center">
-                <Zap className="h-8 w-8 text-green-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-600">GPU Utilization</p>
-                  <p className="text-lg font-semibold text-gray-900">78%</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg">
-              <div className="flex items-center">
-                <Cpu className="h-8 w-8 text-orange-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-600">Training Time</p>
-                  <p className="text-lg font-semibold text-gray-900">142 Hours</p>
-                </div>
-              </div>
+      {/* Main Table */}
+      <div className="rounded-xl bg-white shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-900">Project Tracker</h2>
+            <div className="flex items-center gap-3">
+              <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <Filter className="h-4 w-4" />
+                Filter
+              </button>
+              <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <Search className="h-4 w-4" />
+                Search
+              </button>
+              <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors">
+                <Download className="h-4 w-4" />
+                Export
+              </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="rounded-lg bg-white p-6 shadow">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">AI Projects</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Project Name
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Team Member
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Client
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Task
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Hours
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Accuracy
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Notes
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Progress
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Documentation
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {aiProjects.map((project) => (
-                <tr key={project.id} className="hover:bg-gray-50">
+              {workItems.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <Brain className="h-5 w-5 text-purple-600 mr-2" />
-                      <div className="text-sm font-medium text-gray-900">{project.name}</div>
+                    <div className="flex items-center text-sm text-gray-900">
+                      <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                      {item.date}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                      {project.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      project.status === 'Active' ? 'bg-green-100 text-green-800' :
-                      project.status === 'Training' ? 'bg-blue-100 text-blue-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {project.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{project.accuracy}%</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="w-full bg-gray-200 rounded-full h-2 mr-2" style={{ width: '120px' }}>
-                        <div
-                          className="bg-purple-600 h-2 rounded-full"
-                          style={{ width: `${project.progress}%` }}
-                        />
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold text-xs">
+                        {item.teamMember.substring(0, 2).toUpperCase()}
                       </div>
-                      <span className="text-sm text-gray-900">{project.progress}%</span>
+                      <div className="ml-3">
+                        <div className="text-sm font-medium text-gray-900">{item.teamMember}</div>
+                      </div>
                     </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900 max-w-xs truncate" title={item.client}>
+                      {item.client}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900">{item.task || '-'}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center text-sm text-gray-900">
+                      <Clock className="h-4 w-4 text-gray-400 mr-1" />
+                      {item.hoursWorked || 0}h
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${getStatusColor(item.status)}`}>
+                      {item.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-600 max-w-xs truncate" title={item.notes}>
+                      {item.notes || '-'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {item.documentation ? (
+                      <a
+                        href={item.documentation}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                        View
+                      </a>
+                    ) : (
+                      <span className="text-sm text-gray-400">-</span>
+                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Status Legend */}
+      <div className="mt-6 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Status Legend</h3>
+        <div className="flex flex-wrap gap-3">
+          <div className="flex items-center">
+            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 border border-green-200">
+              Deployed
+            </span>
+          </div>
+          <div className="flex items-center">
+            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800 border border-orange-200">
+              In Dev
+            </span>
+          </div>
+          <div className="flex items-center">
+            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 border border-red-200">
+              In Dev (On Hold)
+            </span>
+          </div>
+          <div className="flex items-center">
+            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+              Planning
+            </span>
+          </div>
+          <div className="flex items-center">
+            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+              Not Started
+            </span>
+          </div>
         </div>
       </div>
     </div>
