@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { Calendar, Clock, FileText, ExternalLink, Filter, Search, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import DateRangePicker from '@/components/DateRangePicker';
 
 // Sample data matching Google Sheets structure
 const workItems = [
@@ -102,17 +104,6 @@ const getStatusColor = (status: string) => {
   }
 };
 
-// Calculate statistics
-const statusCounts = workItems.reduce((acc, item) => {
-  acc[item.status] = (acc[item.status] || 0) + 1;
-  return acc;
-}, {} as Record<string, number>);
-
-const statusChartData = Object.entries(statusCounts).map(([name, value]) => ({
-  name,
-  value
-}));
-
 const statusColors: Record<string, string> = {
   'Deployed': '#10b981',
   'In Dev': '#f97316',
@@ -121,28 +112,61 @@ const statusColors: Record<string, string> = {
   'Not Started': '#6b7280'
 };
 
-// Team member stats
-const teamStats = workItems.reduce((acc, item) => {
-  if (!acc[item.teamMember]) {
-    acc[item.teamMember] = { total: 0, hours: 0 };
-  }
-  acc[item.teamMember].total += 1;
-  acc[item.teamMember].hours += item.hoursWorked;
-  return acc;
-}, {} as Record<string, { total: number; hours: number }>);
-
-const teamChartData = Object.entries(teamStats).map(([name, data]) => ({
-  name,
-  tasks: data.total,
-  hours: data.hours
-}));
-
 export default function AIWorksPage() {
+  const [filteredItems, setFilteredItems] = useState(workItems);
+  const [dateRange, setDateRange] = useState<{ start?: Date; end?: Date }>({});
+
+  // Calculate statistics based on filtered items
+  const statusCounts = filteredItems.reduce((acc, item) => {
+    acc[item.status] = (acc[item.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const statusChartData = Object.entries(statusCounts).map(([name, value]) => ({
+    name,
+    value
+  }));
+
+  // Team member stats based on filtered items
+  const teamStats = filteredItems.reduce((acc, item) => {
+    if (!acc[item.teamMember]) {
+      acc[item.teamMember] = { total: 0, hours: 0 };
+    }
+    acc[item.teamMember].total += 1;
+    acc[item.teamMember].hours += item.hoursWorked;
+    return acc;
+  }, {} as Record<string, { total: number; hours: number }>);
+
+  const teamChartData = Object.entries(teamStats).map(([name, data]) => ({
+    name,
+    tasks: data.total,
+    hours: data.hours
+  }));
+
+  const handleDateChange = (startDate: Date | undefined, endDate: Date | undefined) => {
+    setDateRange({ start: startDate, end: endDate });
+
+    if (!startDate || !endDate) {
+      setFilteredItems(workItems);
+      return;
+    }
+
+    const filtered = workItems.filter(item => {
+      const itemDate = new Date(item.date);
+      return itemDate >= startDate && itemDate <= endDate;
+    });
+
+    setFilteredItems(filtered);
+  };
+
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">AI Works Dashboard</h1>
-        <p className="mt-2 text-gray-600">Project tracking and team workflow management</p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">AI Works Dashboard</h1>
+          <p className="mt-2 text-gray-600">Project tracking and team workflow management</p>
+        </div>
+        <DateRangePicker onDateChange={handleDateChange} />
       </div>
 
       {/* Stats Cards */}
@@ -151,7 +175,7 @@ export default function AIWorksPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Projects</p>
-              <p className="mt-2 text-3xl font-bold text-gray-900">{workItems.length}</p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">{filteredItems.length}</p>
               <p className="mt-2 text-sm text-gray-500">Active items</p>
             </div>
             <div className="rounded-full bg-purple-100 p-3">
@@ -295,7 +319,7 @@ export default function AIWorksPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {workItems.map((item) => (
+              {filteredItems.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center text-sm text-gray-900">
