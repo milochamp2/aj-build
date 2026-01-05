@@ -208,32 +208,7 @@ Your Google Sheet should have this structure:
 
 ---
 
-### Step 6: Test Locally
-
-1. **Make sure `.env.local` is set up** (Step 4)
-
-2. **Run development server:**
-   ```bash
-   npm run dev
-   ```
-
-3. **Open browser:**
-   ```
-   http://localhost:3000/ai-works
-   ```
-
-4. **Check for loading:**
-   - Should show "Loading data from Google Sheets..."
-   - Then display your data
-
-5. **If there's an error:**
-   - Check browser console (F12)
-   - Check terminal for error messages
-   - Verify environment variables are set correctly
-
----
-
-### Step 7: Deploy to Vercel
+### Step 6: Deploy to Vercel
 
 1. **Add Environment Variables in Vercel:**
    - Go to your Vercel project dashboard
@@ -259,6 +234,24 @@ Your Google Sheet should have this structure:
    ```
 
 4. **Vercel will auto-deploy**
+
+### Step 7: Test on Vercel
+
+1. **Wait for deployment to complete** in Vercel dashboard
+
+2. **Visit your production URL:**
+   ```
+   https://your-domain.vercel.app/ai-works
+   ```
+
+3. **Expected behavior:**
+   - ✅ **With environment variables set:** Displays your Google Sheets data
+   - ⚠️ **Without environment variables:** Displays sample data with message "(Using sample data - Check connection)"
+
+4. **If connection fails:**
+   - Check **Vercel Function Logs** for error details
+   - Verify all environment variables in Vercel Settings
+   - Click "Refresh" button on dashboard to retry
 
 ---
 
@@ -330,36 +323,42 @@ export const revalidate = 60; // Change to desired seconds
 
 ```
 your-project/
-├── .env.local                    # Environment variables (local)
 ├── .env.local.example            # Template for environment variables
 ├── lib/
-│   └── googleSheets.ts           # Google Sheets API service
+│   └── googleSheets.ts           # Google Sheets API service (OAuth2)
 ├── app/
 │   ├── api/
 │   │   └── sheets/
 │   │       └── route.ts          # API endpoint
 │   └── ai-works/
 │       └── page.tsx              # Dashboard page (updated)
-└── google-credentials.json       # Service account key (don't commit!)
+└── *.json                        # OAuth2 credentials (don't commit!)
 ```
+
+**Note:** Environment variables are set in Vercel Dashboard, not in `.env.local` for production.
 
 ---
 
 ## ✅ Verification Checklist
 
-Before deploying, verify:
+**To deploy without Google Sheets (using sample data):**
+- [ ] Code pushed to repository
+- [ ] Vercel deployment successful
+- [ ] Dashboard accessible at production URL
+- [ ] Sample data displays correctly
 
+**To connect Google Sheets (when ready):**
 - [ ] OAuth2 credentials created in Google Cloud Console
 - [ ] OAuth consent screen configured
-- [ ] Authorized redirect URIs set up
-- [ ] Refresh token obtained
-- [ ] Spreadsheet ID copied
-- [ ] `.env.local` created with all 5 variables
+- [ ] Production redirect URI added to Google Cloud Console
+- [ ] Refresh token obtained from OAuth2 Playground
+- [ ] Spreadsheet ID copied from Google Sheets URL
 - [ ] Sheet has correct structure (8 columns)
 - [ ] Data starts from Row 2
-- [ ] `npm run dev` works and shows data
-- [ ] Environment variables added to Vercel (including production redirect URI)
-- [ ] Deployed to Vercel successfully
+- [ ] All 5 environment variables added to Vercel
+- [ ] Redirect URI matches Vercel domain
+- [ ] Redeployed (or triggered redeploy in Vercel)
+- [ ] Tested on Vercel production URL
 
 ---
 

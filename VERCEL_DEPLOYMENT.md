@@ -1,6 +1,6 @@
-# Vercel Deployment Guide - Fixed Structure
+# Vercel Deployment Guide
 
-The dashboard files are now at the **root level** of the repository, ready for Vercel deployment.
+Your dashboard is ready to deploy to Vercel! All files are at the root level and configured for seamless deployment.
 
 ## ✅ Files Now in Root Directory
 
@@ -21,7 +21,7 @@ All necessary files have been moved to the root:
 1. **Commit and push your code:**
    ```bash
    git add .
-   git commit -m "feat: Build modern dashboard with Finance, Team, and AI Works sections"
+   git commit -m "feat: Switch Google Sheets integration to OAuth2 authentication"
    git push origin main
    ```
 
@@ -137,6 +137,39 @@ Once deployed, you'll get:
 - Production URL: `https://your-project.vercel.app`
 - Automatic deployments on git push
 - Preview deployments for PRs
+
+**Dashboard will display:**
+- ✅ All sections: Dashboard, Finance, Team, AI Works
+- ✅ Sample data in AI Works (project tracker)
+- ⚠️ Message: "(Using sample data - Check connection)"
+
+---
+
+## 📊 Optional: Connect Google Sheets
+
+Your dashboard works perfectly with sample data. When ready to connect Google Sheets:
+
+### Quick Steps:
+
+1. **Get refresh token** from OAuth2 Playground
+   - Visit: https://developers.google.com/oauthplayground/
+   - Use your OAuth2 credentials
+   - Select scope: `spreadsheets.readonly`
+   - Get refresh token
+
+2. **Add environment variables** in Vercel Dashboard → Settings → Environment Variables:
+   - `GOOGLE_SHEETS_SPREADSHEET_ID`
+   - `GOOGLE_CLIENT_ID`
+   - `GOOGLE_CLIENT_SECRET`
+   - `GOOGLE_REDIRECT_URI` (use your Vercel domain)
+   - `GOOGLE_REFRESH_TOKEN`
+
+3. **Update Google Cloud Console**
+   - Add redirect URI: `https://your-domain.vercel.app/api/auth/google/callback`
+
+4. **Redeploy** (automatic when you add env vars)
+
+**Detailed instructions:** See [OAUTH2_QUICK_START.md](./OAUTH2_QUICK_START.md)
 
 ## 🆘 Troubleshooting
 
