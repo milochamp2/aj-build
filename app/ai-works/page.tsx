@@ -1,12 +1,24 @@
 'use client';
 
-import { useState } from 'react';
-import { Calendar, Clock, FileText, ExternalLink, Filter, Search, Download } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Calendar, Clock, FileText, ExternalLink, Filter, Search, Download, RefreshCw } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import DateRangePicker from '@/components/DateRangePicker';
 
-// Sample data matching Google Sheets structure
-const workItems = [
+interface WorkItem {
+  id: number;
+  date: string;
+  teamMember: string;
+  client: string;
+  task: string;
+  hoursWorked: number;
+  status: string;
+  notes: string;
+  documentation: string;
+}
+
+// Sample/fallback data matching Google Sheets structure
+const sampleWorkItems: WorkItem[] = [
   {
     id: 1,
     date: '12/15/2025',
@@ -113,8 +125,41 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AIWorksPage() {
-  const [filteredItems, setFilteredItems] = useState(workItems);
+  const [workItems, setWorkItems] = useState<WorkItem[]>(sampleWorkItems);
+  const [filteredItems, setFilteredItems] = useState<WorkItem[]>(sampleWorkItems);
   const [dateRange, setDateRange] = useState<{ start?: Date; end?: Date }>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Fetch data from Google Sheets
+  const fetchData = async () => {
+    try {
+      setIsRefreshing(true);
+      const response = await fetch('/api/sheets');
+      const result = await response.json();
+
+      if (result.success && result.data.length > 0) {
+        setWorkItems(result.data);
+        setFilteredItems(result.data);
+        setError(null);
+      } else if (!result.success) {
+        setError(result.error || 'Failed to load data');
+        console.error('API Error:', result.details);
+      }
+    } catch (err) {
+      setError('Failed to connect to Google Sheets');
+      console.error('Fetch error:', err);
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   // Calculate statistics based on filtered items
   const statusCounts = filteredItems.reduce((acc, item) => {
@@ -159,14 +204,39 @@ export default function AIWorksPage() {
     setFilteredItems(filtered);
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-purple-600 border-r-transparent"></div>
+          <p className="mt-4 text-gray-600 font-medium">Loading data from Google Sheets...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       <div className="mb-8 flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">AI Works Dashboard</h1>
-          <p className="mt-2 text-gray-600">Project tracking and team workflow management</p>
+          <p className="mt-2 text-gray-600">
+            Project tracking and team workflow management
+            {error && <span className="ml-2 text-amber-600">(Using sample data - Check connection)</span>}
+          </p>
         </div>
-        <DateRangePicker onDateChange={handleDateChange} />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={fetchData}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <DateRangePicker onDateChange={handleDateChange} />
+        </div>
       </div>
 
       {/* Stats Cards */}
