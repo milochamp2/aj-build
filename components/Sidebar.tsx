@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, DollarSign, Users, Brain, Menu, X } from 'lucide-react';
+import { LayoutDashboard, DollarSign, Users, Brain, Menu, X, Settings } from 'lucide-react';
 import { useState } from 'react';
 
 const navigation = [
@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Finance', href: '/finance', icon: DollarSign },
   { name: 'Team', href: '/team', icon: Users },
   { name: 'AI Works', href: '/ai-works', icon: Brain },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export default function Sidebar() {

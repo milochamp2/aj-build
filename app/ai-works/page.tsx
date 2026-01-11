@@ -136,7 +136,19 @@ export default function AIWorksPage() {
   const fetchData = async () => {
     try {
       setIsRefreshing(true);
-      const response = await fetch('/api/sheets');
+
+      // Get clientId and spreadsheetId from localStorage
+      const clientId = localStorage.getItem('google_user_email');
+      const spreadsheetId = localStorage.getItem('google_spreadsheet_id');
+
+      if (!clientId || !spreadsheetId) {
+        setError('Google Sheets not connected. Please go to Settings to connect.');
+        setLoading(false);
+        setIsRefreshing(false);
+        return;
+      }
+
+      const response = await fetch(`/api/sheets?clientId=${encodeURIComponent(clientId)}&spreadsheetId=${encodeURIComponent(spreadsheetId)}`);
       const result = await response.json();
 
       if (result.success && result.data.length > 0) {

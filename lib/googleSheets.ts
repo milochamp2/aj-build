@@ -1,20 +1,5 @@
 import { google } from 'googleapis';
-
-// OAuth2 client configuration
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
-);
-
-// Set credentials using refresh token
-if (process.env.GOOGLE_REFRESH_TOKEN) {
-  oauth2Client.setCredentials({
-    refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-  });
-}
-
-const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
+import { getOAuthTokens } from '@raindance-1/dashboard-core';
 
 export interface WorkItem {
   id: number;
@@ -28,10 +13,32 @@ export interface WorkItem {
   documentation: string;
 }
 
-export async function getWorkItems(): Promise<WorkItem[]> {
+export async function getWorkItems(clientId: string, spreadsheetId: string): Promise<WorkItem[]> {
   try {
+    // Retrieve OAuth tokens from Supabase using dashboard-core
+    const connection = await getOAuthTokens(clientId, 'google');
+
+    if (!connection || !connection.tokens || !connection.tokens.access_token) {
+      throw new Error('No OAuth tokens found. Please connect Google Sheets first.');
+    }
+
+    // Create OAuth2 client with retrieved tokens
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+
+    oauth2Client.setCredentials({
+      access_token: connection.tokens.access_token,
+      refresh_token: connection.tokens.refresh_token,
+      expiry_date: connection.tokens.expires_at ? connection.tokens.expires_at * 1000 : undefined
+    });
+
+    const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
+
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
+      spreadsheetId: spreadsheetId,
       range: 'Sheet1!A2:H', // Adjust this range based on your sheet name and data range
     });
 
@@ -57,21 +64,4 @@ export async function getWorkItems(): Promise<WorkItem[]> {
     console.error('Error fetching data from Google Sheets:', error);
     throw error;
   }
-}
-
-// Helper function to generate OAuth URL (for initial setup)
-export function getAuthUrl() {
-  const scopes = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
-
-  return oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: scopes,
-    prompt: 'consent', // Force to get refresh token
-  });
-}
-
-// Helper function to get tokens from authorization code
-export async function getTokensFromCode(code: string) {
-  const { tokens } = await oauth2Client.getToken(code);
-  return tokens;
 }

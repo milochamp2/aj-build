@@ -1,9 +1,34 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getWorkItems } from '@/lib/googleSheets';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const workItems = await getWorkItems();
+    // Get clientId and spreadsheetId from query parameters
+    const searchParams = request.nextUrl.searchParams;
+    const clientId = searchParams.get('clientId');
+    const spreadsheetId = searchParams.get('spreadsheetId');
+
+    if (!clientId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Missing clientId parameter'
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!spreadsheetId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Missing spreadsheetId parameter'
+        },
+        { status: 400 }
+      );
+    }
+
+    const workItems = await getWorkItems(clientId, spreadsheetId);
     return NextResponse.json({ success: true, data: workItems });
   } catch (error) {
     console.error('API Error:', error);
